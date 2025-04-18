@@ -104,3 +104,13 @@ void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
         }
     }
 }
+
+void draw_filled_rectangle(int x, int y, int w, int h, uint32_t color) {
+    for (int j = 0; j < h; ++j) {
+        for (int i = 0; i < w; ++i) {
+            draw_pixel(x + i, y + j, color);
+        }
+    }
+}
+
+

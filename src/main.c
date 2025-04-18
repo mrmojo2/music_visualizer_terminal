@@ -2,10 +2,13 @@
 #include <pulse/error.h>
 #include <SDL2/SDL.h>
 #include <stdio.h>
+#include <complex.h>
 
 #include "display.h"
+#include "fft.h"
 
 #define RATE 44100
+#define N    512
 #define ARRAY_SIZE(x) sizeof(x)/sizeof(x[0])
 
 
@@ -13,17 +16,22 @@
 //	Global Variables
 /////////////////////////////////////////////////////////////////////
 bool isRunning = false;
+bool time_domain = true;
 int error;
 int previous_frame_time = 0;
 pa_simple *s = NULL;
 pa_sample_spec ss;
-int16_t buffer[(RATE * 2)/100];	//stores 10ms of stereo audio
+int16_t buffer[(RATE * 2)/86];	//stores 11ms of stereo audio
+float left_buffer[N];
+float right_buffer[N];
+float max_amp;
+float complex left_transform[N];
+float complex right_transform[N];
 
 
 /////////////////////////////////////////////////////////////////////
 //	Function definations
 /////////////////////////////////////////////////////////////////////
-
 
 void setup(){
 	//allocate memory for color buffer
@@ -74,6 +82,9 @@ SDL_Event event;
                         if(event.key.keysym.sym == SDLK_ESCAPE){
                                 isRunning = false;
                         }
+                        if(event.key.keysym.sym == SDLK_d){
+                                time_domain = !time_domain;
+                        }
 
                         break;
         }
@@ -89,15 +100,31 @@ void update(void){
 	previous_frame_time = SDL_GetTicks();            //how may ms since SDL_INIT
 
 	if(pa_simple_read(s,buffer,sizeof(buffer),&error) < 0){
-			fprintf(stderr,"failed to read: %s,",pa_strerror(error));
-			pa_simple_free(s);
+		fprintf(stderr,"failed to read: %s,",pa_strerror(error));
+		pa_simple_free(s);
 	}
 	
+	max_amp = 0.0f;
+	for(size_t i=0; i<N; ++i){
+		left_buffer[i] = buffer[2*i];
+		right_buffer[i] = buffer[2*i+1];
+	}
+if(!time_domain){
+	//perform fft:
+	fft(left_buffer,left_transform,N);
+	fft(right_buffer,right_transform,N);
+	for(size_t i=0; i<N;++i){
+		float c = (cabsf(left_transform[i]));
+		if( c > max_amp)
+			max_amp = c;
+	}
+}
 
 
 }
 
 void render(void){
+if(time_domain){
 	for(size_t i=0; i<ARRAY_SIZE(buffer)/2;  i++){
 		int16_t sample_right = buffer[2*i];
 		int16_t sample_left  = buffer[2*i + 1];
@@ -122,6 +149,22 @@ void render(void){
 		draw_line(2*i+1, window_height/2,2*i+1,end_y_r, 0xff0000ff);
 			
 	}
+}else{
+	float cell_width =2*(float)window_width/N;
+	int h = window_height/2;
+	for(size_t i = 0; i<N/2; ++i){
+		float lmag= cabsf(left_transform[i])/max_amp;	
+		float rmag= cabsf(right_transform[i]);
+
+		printf("lmag: %5.5f, rmag: %5.5f\n",lmag,rmag);
+		draw_line(i*cell_width,h,i*cell_width,h-h*lmag,0xffff0000);
+		/*SDL_SetRenderDrawColor(renderer,255,0,0,255);
+		SDL_Rect rect  = {i*cell_width,h-h*lmag,cell_width,h*lmag};
+		SDL_RenderFillRect(renderer,&rect);
+		SDL_RenderPresent(renderer);*/
+	}
+
+}
 	render_color_buffer();
 	clear_color_buffer(0xffaabbcc);
 	SDL_RenderPresent(renderer);                  //This swaps the back buffer (where drawing happens) with the front buffer (displayed on the screen), making the rendered image visible to the user

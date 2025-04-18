@@ -1,23 +1,13 @@
-#include <stdio.h>
+#include <assert.h>
 #include <math.h>
 #include <complex.h>
+#include <stdlib.h>
 
-float pi;
+#include "fft.h"
 
-int main(void){
-	pi = atan2f(1,1)*4;
-	
-	size_t n = 16;
-	float samples[n];
-	float complex out[n];
+float pi = atan2f(1,1)*4;
 
-	//create a wave
-	for(size_t i = 0; i<=n; ++i){
-		float t = (float)i/n;
-		samples[i] = cosf(2*pi*t*1) + sinf(2*pi*t*2);
-	}
-
-
+void dft(float samples[],float complex out[], size_t n){
 	//performing dft
 	for(size_t f = 0; f<n/2; ++f){
 		out[f] = 0;
@@ -39,10 +29,64 @@ int main(void){
 			out[f+n/2] -= v; 
 		}
 	}
-
-	//print frequencies
-	for(size_t f = 0; f < n; ++f){
-		printf("%02zu: %.2f, %.2f\n",f,creal(out[f]),cimag(out[f]));
-	}
-	return 0;
 }
+
+
+//note: n must be power of 2 for fft
+/*void fft(float samples[], size_t stride, float complex out[], size_t n){
+	assert(n>0);
+
+	if(n == 1) {
+		out[0] = samples[0];
+		return;
+	}
+
+	fft(samples,stride*2,out,n/2);
+	fft(samples + stride, stride*2, out + n/2, n/2);
+
+	for(size_t k = 0; k< n/2; ++k){
+		float t = (float)k/n;
+		float complex v = cexp(-2*I*pi*t)*out[k+n/2];
+		float complex e = out[k];
+		out[k] = e+v;
+		out[k+n/2] = e-v;
+	}
+}*/
+
+// Recursive Cooley-Tukey FFT
+void fft(const float* input, float complex* output, size_t n) {
+    if (n == 1) {
+        output[0] = input[0] + 0.0f * I;
+        return;
+    }
+
+    // Divide
+    float* even = (float*)malloc(n / 2 * sizeof(float));
+    float* odd  = (float*)malloc(n / 2 * sizeof(float));
+
+    for (size_t i = 0; i < n / 2; i++) {
+        even[i] = input[i * 2];
+        odd[i]  = input[i * 2 + 1];
+    }
+
+    // Recursively FFT on even and odd
+    float complex* even_fft = (float complex*)malloc(n / 2 * sizeof(float complex));
+    float complex* odd_fft  = (float complex*)malloc(n / 2 * sizeof(float complex));
+
+    fft(even, even_fft, n / 2);
+    fft(odd, odd_fft, n / 2);
+
+    // Combine
+    for (size_t k = 0; k < n / 2; k++) {
+        float complex t = cexpf(-2.0f * I * M_PI * k / n) * odd_fft[k];
+        output[k]       = even_fft[k] + t;
+        output[k + n/2] = even_fft[k] - t;
+    }
+
+    // Cleanup
+    free(even);
+    free(odd);
+    free(even_fft);
+    free(odd_fft);
+}
+
