@@ -8,6 +8,9 @@ uint32_t *color_buffer = NULL;
 SDL_Texture *color_buffer_texture = NULL;
 int window_width = 800;
 int window_height = 600;
+int drag_x = 0;
+int drag_y = 0;
+bool is_dragging = false;
 
 bool initialize_window(void)
 {

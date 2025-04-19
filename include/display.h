@@ -17,6 +17,9 @@ extern uint32_t *color_buffer;
 extern SDL_Texture *color_buffer_texture;
 extern int window_width;
 extern int window_height;
+extern int drag_x;
+extern int drag_y;
+extern bool is_dragging;
 
 
 ////////////////////////////////////////////////////////////////////
