@@ -1,7 +1,7 @@
 #include "audio.h"
 #include <stdio.h>
 int count = 0;
-
+bool audio_is_playing = false;
 const char *get_audio_format_name(SDL_AudioFormat format) {
     switch (format) {
         case AUDIO_U8: return "Unsigned 8-bit";
@@ -28,7 +28,5 @@ void audio_callback(void *user_data, unsigned char *stream, int stream_length){
 	int tocopy = (remaining > stream_length) ? stream_length : remaining;
 
 	SDL_MixAudioFormat(stream,audio_data->buffer + audio_data->position,audio_data->format,tocopy,SDL_MIX_MAXVOLUME);
-	audio_data->sample_buffer = stream;
-	audio_data->sample_buffer_size = tocopy;
 	audio_data->position += tocopy;
 }

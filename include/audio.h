@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 extern int count;
+extern bool audio_is_playing;
 
 typedef struct {
 	uint16_t left;
@@ -13,8 +14,6 @@ typedef struct {
 
 typedef struct {
 	uint8_t *buffer;	        //buffer for entire audio file
-	unsigned char *sample_buffer;  //buffer for the current sample of audio
-	size_t sample_buffer_size;
 	uint32_t length;
 	uint32_t position;
 	SDL_AudioFormat format;
