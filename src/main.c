@@ -7,7 +7,7 @@
 #include "audio.h"
 #include "vector.h"
 
-#define N  512
+#define N  1024
 #define ARRAY_SIZE(x) sizeof(x)/sizeof(x[0])
 
 
@@ -226,21 +226,26 @@ if(time_domain){
 		
 		if(sum_mag > 1e-4){
 			bar_mag[bar_mag_i++] = sum_mag;
+			//bar_mag[bar_mag_i++] = sum_mag/bins_summed;
 		}
+		//printf("%f\n",bar_mag[bar_mag_i-1]);
 		prev_freq = current_freq;
 	}
 	
 	int cell_width = 0;
 	if(bar_mag_i > 0)
 		cell_width = window_width / bar_mag_i;
-	for(int i=0; i<num_bar; i++){
+	for(int i=0; i<bar_mag_i; i++){
 		float normalized = 0.0f;
 		if(fabs(max_amp) > 1e-4){
-			normalized = bar_mag[i]/max_amp;
+			normalized = bar_mag[i] / max_amp;
+			//normalized = log10f(bar_mag[i]) / log10f(max_amp);
 		}
+		printf("%f,max_amp: %f,bar_mag: %f\n",normalized,max_amp,bar_mag[i]);
 		float bar_height = h_by_2 - h_by_2*normalized*0.75;
-		draw_line_gradient(i*cell_width,bar_height,i*cell_width,h_by_2,0xffff0000);
+		//draw_line_gradient(i*cell_width,bar_height,i*cell_width,h_by_2,0xffff0000);
 		draw_gradient_rect(i*cell_width,bar_height,cell_width,h_by_2 - bar_height);
+		draw_outline_rect(i*cell_width,bar_height,cell_width,h_by_2 - bar_height,0xff000000);
 	}	
 
 	

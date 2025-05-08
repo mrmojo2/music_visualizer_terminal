@@ -139,6 +139,11 @@ void draw_gradient_rect(int x, int y, int w, int h){
 		draw_line_gradient(i,y,i,y+h,0xff000000);
 	}
 }
+void draw_outline_rect(int x, int y, int w, int h,uint32_t color){
+	draw_line(x,y,x+w,y,color);
+	draw_line(x,y,x,y+h,color);
+	draw_line(x+w,y,x+w,y+h,color);
+}
 
 void draw_filled_rectangle(int x, int y, int w, int h, uint32_t color) {
     for (int j = 0; j < h; ++j) {
