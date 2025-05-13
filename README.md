@@ -1,6 +1,6 @@
 # Terminal Music Visualizer (Linux)
 
-A minimal music visualizer that runs directly in your terminal. It loads `.wav` files using SDL2 and displays real-time frequency bars using ncurses.
+music visualizer in frequency domain using fast fourier transform that runs directly in your terminal. It loads `.wav` files using SDL2 and displays real-time frequency bars using ncurses.
 
 ---
 ## 🔊 Output Preview
