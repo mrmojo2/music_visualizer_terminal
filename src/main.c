@@ -16,8 +16,6 @@
 //	Global Variables
 /////////////////////////////////////////////////////////////////////
 bool isRunning = false;
-int previous_frame_time = 0;
-bool time_domain = false;
 SDL_Event event;
 audio_t audio_data;
 SDL_AudioSpec wav_spec;
@@ -31,16 +29,19 @@ float complex fft_out_right[N];
 //	Function definations
 /////////////////////////////////////////////////////////////////////
 
+void free_resources(void){
+	SDL_CloseAudioDevice(device_id);
+	SDL_FreeWAV(audio_data.buffer);
+	SDL_Quit();
+	endwin();
+}
+
 void setup(const char *file_path){
 	if(SDL_LoadWAV(file_path,&wav_spec,&audio_data.buffer,&audio_data.length) == NULL ){
 		fprintf(stderr,"Error: %s\n",SDL_GetError());
+		free_resources();	
 		exit(0);
 	}
-	printf("frequencies: %d\n",wav_spec.freq);
-	printf("format:      %s\n",get_audio_format_name(wav_spec.format));
-	printf("samples:     %u\n",wav_spec.samples);
-	printf("channels:    %u\n",wav_spec.channels);
-	printf("length:      %u\n",audio_data.length);
 	
 	audio_data.position = 0;
 	audio_data.format = wav_spec.format;
@@ -100,35 +101,7 @@ void render(void){
 	size_t buf_size = 2*N;
 
 	int h_by_2 = window_height/2;
-if(time_domain){
-	for(size_t i = 0; i < buf_size/2; i++){
-		int16_t left = buf[2*i];
-		int16_t right = buf[2*i+1];
-	
-		float normalized_l;
-		float normalized_r;
-		float end_y_l;
-		float end_y_r;
-		if(left > 0){
-			normalized_l = (float)left/INT16_MAX;
-			end_y_l = h_by_2 - 0.65*h_by_2*normalized_l;
-		}else{
-			normalized_l = (float)left/INT16_MIN;
-			end_y_l = h_by_2 + 0.65*h_by_2*normalized_l;
-		
-		}
-		if(right > 0){
-			normalized_r = (float)right/INT16_MAX;
-			end_y_r = h_by_2 - 0.65*h_by_2*normalized_r;
-		}else{
-			normalized_r = (float)right/INT16_MIN;
-			end_y_r = h_by_2 + 0.65*h_by_2*normalized_r;
-		
-		}
-		//draw_line(2*i, h_by_2, 2*i,end_y_l, 0xffff0000);
-		//draw_line(2*i+1, h_by_2, 2*i+1,end_y_r, 0xff0000ff);
-	}
-}else{
+
 	for(size_t i=0; i < buf_size/2; i++){
 		left_sample[i] = buf[2*i];
 		right_sample[i] = buf[2*i+1];
@@ -208,29 +181,22 @@ if(time_domain){
 	}
 
 
-	
-}
 	refresh();
-	//usleep(10000);
 }
 
-void free_resources(void){
-	SDL_CloseAudioDevice(device_id);
-	SDL_FreeWAV(audio_data.buffer);
-	SDL_Quit();
-	endwin();
-}
 
 
 int main(int argc, char **argv){
 
 	if(argc < 2 ){
 		fprintf(stderr,"Usage: visualizer path_to_audio_file\n");
+		free_resources();
 		exit(0);
 	}
 	
 	if(SDL_Init(SDL_INIT_AUDIO) < 0){
 		fprintf(stderr,"Failed to initialize SDL: %s\n",SDL_GetError());
+		free_resources();
 		exit(0);
 	}
 	isRunning = initialize_ncurses();
