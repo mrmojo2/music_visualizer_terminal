@@ -32,7 +32,7 @@ make
 ### 3. Run the visualizer
 ```bash
 ./bin/visualizer path/to/music_file.wav
-
+```
 ---
 
 ## ✅ TODO
