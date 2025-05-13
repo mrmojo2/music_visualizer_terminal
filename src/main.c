@@ -150,7 +150,7 @@ if(time_domain){
 	int sample_rate = wav_spec.freq;
 	int max_freq = sample_rate/2;
 
-	int num_bar = 100;
+	int num_bar = window_width / 10;
 	
 	float bar_mag[num_bar];
 	int bar_mag_i = 0;
@@ -184,7 +184,7 @@ if(time_domain){
 
 		if(sum_mag > 1e-4){
 			bar_mag[bar_mag_i++] = sum_mag;
-			//bar_mag[bar_mag_i++] = sum_mag/bins_summed; 			//taking average makes the magnitude to small for higher frequencies for some reason
+			//bar_mag[bar_mag_i++] = sum_mag/bins_summed; 			//taking average makes the magnitude too small for higher frequencies maybe use the maximum value or median
 		}
 		prev_freq = current_freq;
 	}
@@ -201,11 +201,12 @@ if(time_domain){
 		float bar_height = h_by_2 - h_by_2*normalized*0.8;
 		int h = (h_by_2 - bar_height)/factor_y;
 		if(h<=0){
-			draw_rect(i*cell_width / factor_x  ,terminal_height/2,cell_width/factor_x,1);
+			draw_rect(i*cell_width / factor_x  ,terminal_height/2 - 1,cell_width/factor_x,1);
 		}else{
 			draw_rect(i*cell_width / factor_x  ,bar_height/ factor_y ,cell_width/factor_x,(h_by_2 - bar_height)/factor_y);
 		}
-	}	
+	}
+
 
 	
 }
