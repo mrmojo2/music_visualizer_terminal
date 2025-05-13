@@ -24,7 +24,8 @@ SDL_AudioSpec wav_spec;
 SDL_AudioDeviceID device_id;
 float left_sample[N];
 float right_sample[N];
-float complex fft_out[N];
+float complex fft_out_left[N];
+float complex fft_out_right[N];
 
 /////////////////////////////////////////////////////////////////////
 //	Function definations
@@ -133,11 +134,15 @@ if(time_domain){
 		right_sample[i] = buf[2*i+1];
 	}
 	
-	fft(left_sample,fft_out,N);
+	fft(left_sample,fft_out_left,N);
+	fft(left_sample,fft_out_right,N);
+
 	
 	float max_amp = 0.0f;
 	for(size_t i=0; i<N; i++){
-		float c = cabsf(fft_out[i]); 
+		float c1 = cabsf(fft_out_left[i]); 
+		float c2 = cabsf(fft_out_right[i]);
+		float c = (c1 > c2) ? c1 : c2;	
 		if(c > max_amp)
 			max_amp = c;
 	}
@@ -164,21 +169,23 @@ if(time_domain){
 		int prev_index = (int)(prev_freq/max_freq * N/2);
 
 		float sum_mag = 0.0f;
-		float bins_summed = 0.0f;
+		int bins_summed = 0;
 
 		for(int j = prev_index+1 ; j <= current_index ; j++){
 			if(j >=0 && j < N/2){
-				float mag = cabsf(fft_out[j]);
+				float mag_left = cabsf(fft_out_left[j]);
+				float mag_right = cabsf(fft_out_right[j]);
+				float mag = (mag_left + mag_right)/2;
 				sum_mag += mag;
 				bins_summed++;
 			}
 		}
-		
+
+
 		if(sum_mag > 1e-4){
 			bar_mag[bar_mag_i++] = sum_mag;
-			//bar_mag[bar_mag_i++] = sum_mag/bins_summed;
+			//bar_mag[bar_mag_i++] = sum_mag/bins_summed; 			//taking average makes the magnitude to small for higher frequencies for some reason
 		}
-		//printf("%f\n",bar_mag[bar_mag_i-1]);
 		prev_freq = current_freq;
 	}
 	
@@ -189,16 +196,12 @@ if(time_domain){
 		float normalized = 0.0f;
 		if(fabs(max_amp) > 1e-4){
 			normalized = bar_mag[i] / max_amp;
-			//normalized = log10f(bar_mag[i]) / log10f(max_amp);
+			//normalized = log10f(bar_mag[i]) / log10f(max_amp);		//showing x axis also in logrithmis scale didnt look so nice
 		}
-		//printf("%f,max_amp: %f,bar_mag: %f\n",normalized,max_amp,bar_mag[i]);
-		float bar_height = h_by_2 - h_by_2*normalized*0.75;
-		//draw_line_gradient(i*cell_width,bar_height,i*cell_width,h_by_2,0xffff0000);
-		//draw_gradient_rect(i*cell_width,bar_height,cell_width,h_by_2 - bar_height);
-		//draw_outline_rect(i*cell_width,bar_height,cell_width,h_by_2 - bar_height,0xff000000);
+		float bar_height = h_by_2 - h_by_2*normalized*0.8;
 		int h = (h_by_2 - bar_height)/factor_y;
 		if(h<=0){
-			draw_rect(i*cell_width / factor_x  ,terminal_height/2 -1 ,cell_width/factor_x,1);
+			draw_rect(i*cell_width / factor_x  ,terminal_height/2,cell_width/factor_x,1);
 		}else{
 			draw_rect(i*cell_width / factor_x  ,bar_height/ factor_y ,cell_width/factor_x,(h_by_2 - bar_height)/factor_y);
 		}
