@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <SDL2/SDL.h>
+#include <ncurses.h>
 
 #define FPS 25
 #define FRAME_TARGET_TIME (1000/FPS)
@@ -11,31 +11,16 @@
 ////////////////////////////////////////////////////////////////////
 //	Global Variables
 ////////////////////////////////////////////////////////////////////
-extern SDL_Window *window;
-extern SDL_Renderer *renderer;
-extern uint32_t *color_buffer;
-extern SDL_Texture *color_buffer_texture;
 extern int window_width;
 extern int window_height;
-extern int drag_x;
-extern int drag_y;
-extern bool is_dragging;
-
+extern int terminal_width;
+extern int terminal_height;
 
 ////////////////////////////////////////////////////////////////////
 //      Functions
 ////////////////////////////////////////////////////////////////////
-bool initialize_window(void);
-
-void draw_pixel(int x,int y, uint32_t color);
-void draw_line(int x0, int y0, int x1, int y1, uint32_t color);
-void draw_line_gradient(int x0, int y0, int x1, int y1, uint32_t color);
-void draw_filled_rectangle(int x, int y, int w, int h, uint32_t color); 
-void draw_gradient_rect(int x, int y, int w, int h);
-void draw_outline_rect(int x, int y, int w, int h,uint32_t color);
-
-void clear_color_buffer(uint32_t color);
-void render_color_buffer(void);
-void destroy_window(void);
-
+bool initialize_ncurses();
+void draw_pixel(int y, int x, short color_pair_id, short fg, short bg);
+int get_terminal_size_pixels(int *width, int *height); 
+void draw_rect(int x, int y, int width, int height);
 #endif

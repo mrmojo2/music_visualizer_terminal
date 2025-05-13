@@ -1,5 +1,5 @@
 build:
-	gcc -Wall -I ./include ./src/*.c -lSDL2 -lm -lpulse -lpulse-simple -o ./bin/visualizer
+	gcc -Wall -I ./include ./src/*.c -lSDL2 -lm -lncursesw -o ./bin/visualizer
 
 run:
 	./bin/visualizer

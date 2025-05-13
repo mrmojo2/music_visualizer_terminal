@@ -1,57 +1,85 @@
+#define _XOPEN_SOURCE_EXTENDED 1
 #include "display.h"
-
 #include <stdio.h>
+#include <ncurses.h>
+#include <locale.h>
+#include <wchar.h>
+#include <unistd.h>
+#include <string.h>
 
-SDL_Window *window = NULL;
-SDL_Renderer *renderer = NULL;
-uint32_t *color_buffer = NULL;
-SDL_Texture *color_buffer_texture = NULL;
-int window_width = 800;
-int window_height = 600;
-int drag_x = 0;
-int drag_y = 0;
-bool is_dragging = false;
+int window_height,window_width;               //in pixels
+int terminal_height,terminal_width;	      //in charecters
 
-bool initialize_window(void)
-{
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
-    {
-        fprintf(stderr, "Eror Initializing SDL \n");
-        return false;
-    }
+bool initialize_ncurses(){
+	setlocale(LC_ALL, "");
+	initscr();
+	start_color();
+	use_default_colors(); // <<== enables transparent background
+	noecho();
+	curs_set(FALSE);
+	keypad(stdscr, TRUE);
+	nodelay(stdscr, TRUE);
+	timeout(0);
 
-    // use sdl to query the full screen size of the display
-
-    // Create SDL Window
-    window = SDL_CreateWindow(
-        NULL, // no window name
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
-        window_width,
-        window_height,
-        SDL_WINDOW_BORDERLESS);
-
-    if (!window)
-    {
-        fprintf(stderr, "Error Creating SDL Window\n");
-        return false;
-    }
-
-    // Create SDL Renderer
-    renderer = SDL_CreateRenderer(
-        window,
-        -1, // use default() output/display device
-        0   // no special flags
-    );
-
-    if (!renderer)
-    {
-        fprintf(stderr, "Error creating SDL Renerer.\n");
-        return false;
-    }
-
-    return true;
+	getmaxyx(stdscr,terminal_height,terminal_width);
+	return true;
 }
+
+
+
+int get_terminal_size_pixels(int *width, int *height) {
+	FILE *fp = popen("xwininfo -id $(xdotool getactivewindow)", "r");
+	if (!fp) {
+		perror("popen");
+		return -1;
+	}
+
+	char line[256];
+	while (fgets(line, sizeof(line), fp)) {
+		if (sscanf(line, "  Width: %d", width) == 1) continue;
+		if (sscanf(line, "  Height: %d", height) == 1) continue;
+	}
+
+	pclose(fp);
+	return (*width > 0 && *height > 0) ? 0 : -1;
+}
+
+
+void draw_pixel(int y, int x, short color_pair_id, short fg, short bg) {
+	init_pair(color_pair_id, fg, bg);
+
+	wchar_t wch[] = L"█";
+	cchar_t block;
+	setcchar(&block, wch, A_NORMAL, color_pair_id, NULL);
+
+	if (x >= 0 && x < window_width && y >= 0 && y < window_height) {
+		mvadd_wch(y, x, &block);
+	}
+}
+
+void draw_rect(int x, int y, int width, int height){
+	for(int i = x; i < x+width; i++){
+		for(int j = y; j < y+height; j++){
+			float t = (float) j / (float)terminal_height;
+			short color;
+			short pair_id;
+			if(t < 0.2f){
+				color = COLOR_RED;
+				pair_id = 1;
+			}else if (t > 0.2f && t < 0.4f){
+				color = COLOR_YELLOW;
+				pair_id = 2;
+			}else if(t > 0.4f){
+				color = COLOR_GREEN;
+				pair_id = 3;
+			}
+			draw_pixel(j,i,pair_id,color,-1);
+		}
+	}
+}
+
+
+#if 0
 
 void clear_color_buffer(uint32_t color){
 	for(int i=0; i<window_width * window_height; i++)
@@ -153,4 +181,4 @@ void draw_filled_rectangle(int x, int y, int w, int h, uint32_t color) {
     }
 }
 
-
+#endif
