@@ -5,8 +5,7 @@ A minimal music visualizer that runs directly in your terminal. It loads `.wav` 
 ---
 ## 🔊 Output Preview
 
-*(Insert your preview image or GIF here)*  
-![Visualizer Preview](preview.gif)
+![Visualizer Preview](output_preview.gif)
 
 ---
 
